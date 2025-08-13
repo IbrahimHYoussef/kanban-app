@@ -1,0 +1,40 @@
+# Binaries for the current OS and architecture
+*.exe
+*.dll
+*.so
+*.dylib
+*.wasm
+*.o
+
+# Ignore all files without an extension anywhere
+*[^.]*
+
+# But allow files with a dot
+!*.* 
+
+
+# Build output directories
+/bin/
+/pkg/
+
+# Test output
+testdata/
+*.test
+
+# Go module cache
+.go/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.bak
+*.log
+
+# Environment variables
+.env
+.env.*
+
+# OS generated files
+.DS_Store
+Thumbs.db
