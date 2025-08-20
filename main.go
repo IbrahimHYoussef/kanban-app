@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	"github.com/justinas/alice"
 )
 
@@ -131,6 +132,10 @@ func LoggingMiddleWare(next http.Handler) http.Handler {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error Loading .env file")
+	}
 	log.Println("Hello server")
 
 	router := mux.NewRouter()
