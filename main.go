@@ -8,13 +8,15 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/justinas/alice"
 )
 
 var port string = ":4000"
 
 type RouteResponse struct {
 	Message string `json:"message"`
-	Type    string `json:"type"`
+	Type    string `json:"type,omitempty"`
+	ID      string `json:"id,omitempty"`
 }
 
 type HealthCheck struct {
@@ -92,17 +94,23 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 // create project
 func CreateProjectHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json")
+
 }
 
 // update project
-func UpdateHandler(w http.ResponseWriter, r *http.Request) {
+func UpdateProjectHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json")
+	vars := mux.Vars(r)
+	projectId := vars["id"]
+	log.Printf("updated project with id %s", projectId)
+	json.NewEncoder(w).Encode(RouteResponse{ID: projectId, Message: "Hello from create projects"})
 }
 
 // get projects
 
 func GetProjectHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json")
+
 }
 
 // get project
@@ -115,28 +123,37 @@ func DeleteProjectsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json")
 }
 
+func LoggingMiddleWare(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	log.Println("Hello server")
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/", HandleHealth).Methods("GET")
+	routeChain := alice.New(LoggingMiddleWare)
 
-	router.HandleFunc("/tax", HandleTax).Methods("POST")
+	router.Handle("/", routeChain.ThenFunc(HandleHealth)).Methods("GET")
 
-	router.HandleFunc("/register", RegisterHandler).Methods("POST")
+	router.Handle("/tax", routeChain.ThenFunc(HandleTax)).Methods("POST")
 
-	router.HandleFunc("/login", LoginHandler).Methods("POST")
+	router.Handle("/register", routeChain.ThenFunc(RegisterHandler)).Methods("POST")
 
-	router.HandleFunc("/projects", CreateProjectHandler).Methods("POST")
+	router.Handle("/login", routeChain.ThenFunc(LoginHandler)).Methods("POST")
 
-	router.HandleFunc("/projects/{id}", UpdateHandler).Methods("PUT")
+	router.Handle("/projects", routeChain.ThenFunc(CreateProjectHandler)).Methods("POST")
 
-	router.HandleFunc("/projects/{id}", GetProjectHandler).Methods("GET")
+	router.Handle("/projects/{id}", routeChain.ThenFunc(UpdateProjectHandler)).Methods("PUT")
 
-	router.HandleFunc("/projects", GetProjectsHandler).Methods("GET")
+	router.Handle("/projects/{id}", routeChain.ThenFunc(GetProjectHandler)).Methods("GET")
 
-	router.HandleFunc("/projects/{id}", DeleteProjectsHandler).Methods("DELETE")
+	router.Handle("/projects", routeChain.ThenFunc(GetProjectsHandler)).Methods("GET")
+
+	router.Handle("/projects/{id}", routeChain.ThenFunc(DeleteProjectsHandler)).Methods("DELETE")
 
 	log.Printf("Starter Server on port %s\n", port[1:])
 	log.Fatal(http.ListenAndServe(port, router))
