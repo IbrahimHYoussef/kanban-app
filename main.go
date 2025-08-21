@@ -1,23 +1,47 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
+	"os"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/justinas/alice"
+	_ "github.com/lib/pq"
+	"golang.org/x/crypto/bcrypt"
 )
 
-var port string = ":4000"
+type App struct {
+	Port string
+	DB   *sql.DB
+}
 
 type RouteResponse struct {
 	Message string `json:"message"`
 	Type    string `json:"type,omitempty"`
 	ID      string `json:"id,omitempty"`
+}
+
+type AuthRequest struct {
+	Username string `json:"user_name"`
+	Password string `json:"password"`
+}
+
+type AuthResponse struct {
+	UserID   string `json:"user_id"`
+	Username string `json:"user_name"`
+}
+
+type ErrorResponse struct {
+	Messsage   string `json:"message"`
+	StatusCode int    `json:"status_code"`
 }
 
 type HealthCheck struct {
@@ -82,14 +106,76 @@ func HandleTax(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func RespondWithError(w http.ResponseWriter, status_code int, message string) {
+	res := ErrorResponse{Messsage: message, StatusCode: status_code}
+	w.WriteHeader(res.StatusCode)
+	json.NewEncoder(w).Encode(&res)
+}
+
+func ValidateEmail(email string) error {
+	re := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	if !re.MatchString(email) {
+		return errors.New("email dose not match email fromate")
+	} else {
+		return nil
+	}
+}
+
 // register
-func RegisterHandler(w http.ResponseWriter, r *http.Request) {
+func (app *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json")
+	var auth_req AuthRequest
+	err := json.NewDecoder(r.Body).Decode(&auth_req)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "Invalid Request")
+		return
+	}
+	err = ValidateEmail(auth_req.Username)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "email not in correct formate")
+		return
+	}
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(auth_req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	var user_id string
+	err = app.DB.QueryRow("INSERT INTO \"users\" (user_name,password) VALUES ($1,$2) RETURNING user_id", auth_req.Username, string(hashedPassword)).Scan(&user_id)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Error Creating User")
+		log.Print(err)
+		return
+	}
+	auth_res := AuthResponse{UserID: user_id, Username: auth_req.Username}
+	json.NewEncoder(w).Encode(&auth_res)
 }
 
 // login
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
+func (app *App) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json")
+	var auth_req AuthRequest
+	err := json.NewDecoder(r.Body).Decode(&auth_req)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "Invalid Request")
+		return
+	}
+	var user_name string
+	var password string
+	err = app.DB.QueryRow("SELECT user_name,password FROM users WHERE user_name = ?;", auth_req.Username).Scan(user_name, password)
+	if err != nil {
+		log.Printf("User with User Name %s not Found", auth_req.Username)
+		log.Print(err)
+		RespondWithError(w, http.StatusBadRequest, "User Not Found")
+		return
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(password), []byte(auth_req.Password))
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "Wrong Password Or User")
+		return
+	}
+	auth_res := AuthResponse{UserID: user_name, Username: auth_req.Username}
+	json.NewEncoder(w).Encode(&auth_res)
 }
 
 // create project
@@ -136,7 +222,20 @@ func main() {
 	if err != nil {
 		log.Fatal("Error Loading .env file")
 	}
+
 	log.Println("Hello server")
+
+	connString := os.Getenv("PSQL_URL")
+	if len(connString) == 0 {
+		log.Fatalf("No Environment Connection String Set")
+	}
+
+	DB, err := sql.Open("postgres", connString)
+	if err != nil {
+		log.Fatalf("Could Not Connect to Database\n %s", err)
+	}
+	app := &App{DB: DB, Port: ":4000"}
+	defer DB.Close()
 
 	router := mux.NewRouter()
 
@@ -146,9 +245,9 @@ func main() {
 
 	router.Handle("/tax", routeChain.ThenFunc(HandleTax)).Methods("POST")
 
-	router.Handle("/register", routeChain.ThenFunc(RegisterHandler)).Methods("POST")
+	router.Handle("/register", routeChain.ThenFunc(app.RegisterHandler)).Methods("POST")
 
-	router.Handle("/login", routeChain.ThenFunc(LoginHandler)).Methods("POST")
+	router.Handle("/login", routeChain.ThenFunc(app.LoginHandler)).Methods("POST")
 
 	router.Handle("/projects", routeChain.ThenFunc(CreateProjectHandler)).Methods("POST")
 
@@ -160,6 +259,6 @@ func main() {
 
 	router.Handle("/projects/{id}", routeChain.ThenFunc(DeleteProjectsHandler)).Methods("DELETE")
 
-	log.Printf("Starter Server on port %s\n", port[1:])
-	log.Fatal(http.ListenAndServe(port, router))
+	log.Printf("Starter Server on port %s\n", app.Port[1:])
+	log.Fatal(http.ListenAndServe(app.Port, router))
 }
