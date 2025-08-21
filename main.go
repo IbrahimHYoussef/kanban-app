@@ -247,6 +247,21 @@ func LoggingMiddleWare(next http.Handler) http.Handler {
 	})
 }
 
+func AuthMiddleWare(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		auth_header := r.Header.Get("Authorization")
+		if len(auth_header) == 0 {
+			RespondWithError(w, http.StatusUnauthorized, "Not Allowed To Access This Endpoint")
+			return
+		}
+		token := auth_header[7:]
+		log.Print(token)
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -271,6 +286,8 @@ func main() {
 
 	routeChain := alice.New(LoggingMiddleWare)
 
+	routeChainAuthed := alice.New(LoggingMiddleWare, AuthMiddleWare)
+
 	router.Handle("/", routeChain.ThenFunc(HandleHealth)).Methods("GET")
 
 	router.Handle("/tax", routeChain.ThenFunc(HandleTax)).Methods("POST")
@@ -279,7 +296,7 @@ func main() {
 
 	router.Handle("/login", routeChain.ThenFunc(app.LoginHandler)).Methods("POST")
 
-	router.Handle("/projects", routeChain.ThenFunc(CreateProjectHandler)).Methods("POST")
+	router.Handle("/projects", routeChainAuthed.ThenFunc(CreateProjectHandler)).Methods("POST")
 
 	router.Handle("/projects/{id}", routeChain.ThenFunc(UpdateProjectHandler)).Methods("PUT")
 
