@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -160,21 +161,24 @@ func (app *App) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, "Invalid Request")
 		return
 	}
-	var user_name string
-	var password string
-	err = app.DB.QueryRow("SELECT user_name,password FROM users WHERE user_name = ?;", auth_req.Username).Scan(user_name, password)
+	var user_id int64
+	var user_stored AuthRequest
+	err = app.DB.QueryRow("SELECT user_id,user_name,password FROM \"users\" WHERE user_name = $1", auth_req.Username).Scan(&user_id, &user_stored.Username, &user_stored.Password)
 	if err != nil {
-		log.Printf("User with User Name %s not Found", auth_req.Username)
+		if err == sql.ErrNoRows {
+			log.Printf("User with User Name %s not Found", auth_req.Username)
+			RespondWithError(w, http.StatusBadRequest, "User Not Found")
+		}
 		log.Print(err)
-		RespondWithError(w, http.StatusBadRequest, "User Not Found")
+		RespondWithError(w, http.StatusInternalServerError, "InternalServerError")
 		return
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(password), []byte(auth_req.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(user_stored.Password), []byte(auth_req.Password))
 	if err != nil {
 		RespondWithError(w, http.StatusUnauthorized, "Wrong Password Or User")
 		return
 	}
-	auth_res := AuthResponse{UserID: user_name, Username: auth_req.Username}
+	auth_res := AuthResponse{UserID: strconv.FormatInt(user_id, 10), Username: auth_req.Username}
 	json.NewEncoder(w).Encode(&auth_res)
 }
 
