@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/justinas/alice"
@@ -20,8 +21,9 @@ import (
 )
 
 type App struct {
-	Port string
-	DB   *sql.DB
+	Port   string
+	DB     *sql.DB
+	JWTKey []byte
 }
 
 type RouteResponse struct {
@@ -35,9 +37,16 @@ type AuthRequest struct {
 	Password string `json:"password"`
 }
 
+type Claims struct {
+	Username string `json:"user_name"`
+	UserID   string `json:"user_id"`
+	jwt.RegisteredClaims
+}
+
 type AuthResponse struct {
 	UserID   string `json:"user_id"`
 	Username string `json:"user_name"`
+	Token    string `json:"token"`
 }
 
 type ErrorResponse struct {
@@ -152,6 +161,17 @@ func (app *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(&auth_res)
 }
 
+func (app *App) GenerateToken(user_name string, user_id int64) (string, error) {
+	expirationTime := time.Now().Add(time.Minute * 20)
+	claims := &Claims{Username: user_name, UserID: strconv.FormatInt(user_id, 10), RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(expirationTime)}}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(app.JWTKey)
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
+}
+
 // login
 func (app *App) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json")
@@ -178,7 +198,13 @@ func (app *App) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusUnauthorized, "Wrong Password Or User")
 		return
 	}
-	auth_res := AuthResponse{UserID: strconv.FormatInt(user_id, 10), Username: auth_req.Username}
+
+	tokenString, err := app.GenerateToken(user_stored.Username, user_id)
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "Wrong Password Or User")
+		return
+	}
+	auth_res := AuthResponse{UserID: strconv.FormatInt(user_id, 10), Username: auth_req.Username, Token: tokenString}
 	json.NewEncoder(w).Encode(&auth_res)
 }
 
@@ -238,7 +264,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could Not Connect to Database\n %s", err)
 	}
-	app := &App{DB: DB, Port: ":4000"}
+	app := &App{DB: DB, Port: ":4000", JWTKey: []byte(os.Getenv("JWT_KEY"))}
 	defer DB.Close()
 
 	router := mux.NewRouter()
