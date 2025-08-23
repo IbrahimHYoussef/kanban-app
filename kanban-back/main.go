@@ -50,7 +50,7 @@ type Claims struct {
 type AuthResponse struct {
 	UserID   string `json:"user_id"`
 	Username string `json:"user_name"`
-	Token    string `json:"token"`
+	Token    string `json:"token,omitempty"`
 }
 
 type ErrorResponse struct {
@@ -58,6 +58,16 @@ type ErrorResponse struct {
 	StatusCode int    `json:"status_code"`
 }
 
+type Project struct {
+	ProjectID       int      `json:"project_id,omitempty"`
+	Name            string   `json:"name,omitempty"`
+	ReboUrl         string   `json:"rebo_url,omitempty"`
+	SiteUrl         string   `json:"site_url,omitempty"`
+	Description     string   `json:"description,omitempty"`
+	Dependencies    []string `json:"dependencies,omitempty"`
+	DevDependencies []string `json:"dev_dependencies,omitempty"`
+	State           string   `json:"status,omitempty"`
+}
 type HealthCheck struct {
 	IsHealthy bool   `json:"is_healthy"`
 	Time      string `json:"time"`
@@ -143,6 +153,7 @@ func (app *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	var user_id string
 	err = app.DB.QueryRow("INSERT INTO \"users\" (user_name,password) VALUES ($1,$2) RETURNING user_id", auth_req.Username, string(hashedPassword)).Scan(&user_id)
 	if err != nil {
+		// TODO HANDLE USER ALERADY EXITS ERROR
 		RespondWithError(w, http.StatusInternalServerError, "Error Creating User")
 		log.Print(err)
 		return
@@ -199,9 +210,10 @@ func (app *App) LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // create project
-func CreateProjectHandler(w http.ResponseWriter, r *http.Request) {
+func (app *App) CreateProjectHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json")
 	log.Printf("User accessing is %s", r.Context())
+
 }
 
 // update project
@@ -271,18 +283,21 @@ func (app *App) AuthMiddleWare(next http.Handler) http.Handler {
 
 func ValidationMiddelWare(schema string) func(http.Handler) http.Handler {
 	if len(schema) == 0 {
-		log.Fatal("No Schema String was added")
+		log.Println("No Schema String was added Reverting to Default")
+		schema = "{}"
 	}
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var body map[string]interface{}
 			bodyBytes, err := io.ReadAll(r.Body)
 			if err != nil {
+				log.Printf("Error no body to read in ValidationMiddelWare")
 				RespondWithError(w, http.StatusBadRequest, "Invalid Request Payload")
 				return
 			}
 			err = json.Unmarshal(bodyBytes, &body)
 			if err != nil {
+				log.Printf("Failed to Unmarshal in ValidationMiddelWare")
 				RespondWithError(w, http.StatusBadRequest, "Invalid Request Payload")
 				return
 			}
@@ -408,6 +423,8 @@ func main() {
 	routeChainAuthed := alice.New(LoggingMiddleWare, app.AuthMiddleWare)
 
 	loginMiddleWare := alice.New(LoggingMiddleWare, ValidationMiddelWare(schemas["loginuser.json"]))
+	projectMiddleWare := alice.New(LoggingMiddleWare, app.AuthMiddleWare, ValidationMiddelWare(schemas["projects.json"]))
+	// projectMiddleWare := alice.New(LoggingMiddleWare, app.AuthMiddleWare, ValidationMiddelWare(""))
 
 	router.Handle("/", routeChain.ThenFunc(HandleHealth)).Methods("GET")
 	router.Handle("/tax", routeChain.ThenFunc(HandleTax)).Methods("POST")
@@ -415,12 +432,12 @@ func main() {
 	router.Handle("/api/v1/auth/register", loginMiddleWare.ThenFunc(app.RegisterHandler)).Methods("POST")
 	router.Handle("/api/v1/auth/login", loginMiddleWare.ThenFunc(app.LoginHandler)).Methods("POST")
 
-	router.Handle("/api/v1/projects", routeChainAuthed.ThenFunc(CreateProjectHandler)).Methods("POST")
-	router.Handle("/api/v1/projects/{id}", routeChain.ThenFunc(UpdateProjectHandler)).Methods("PUT")
-	router.Handle("/api/v1/projects/{id}", routeChain.ThenFunc(GetProjectHandler)).Methods("GET")
-	router.Handle("/api/v1/projects", routeChain.ThenFunc(GetProjectsHandler)).Methods("GET")
-	router.Handle("/api/v1/projects/{id}", routeChain.ThenFunc(DeleteProjectsHandler)).Methods("DELETE")
-
+	router.Handle("/api/v1/projects/{id}", routeChainAuthed.ThenFunc(GetProjectHandler)).Methods("GET")
+	router.Handle("/api/v1/projects", routeChainAuthed.ThenFunc(GetProjectsHandler)).Methods("GET")
+	router.Handle("/api/v1/projects", projectMiddleWare.ThenFunc(app.CreateProjectHandler)).Methods("POST")
+	router.Handle("/api/v1/projects/{id}", projectMiddleWare.ThenFunc(UpdateProjectHandler)).Methods("PUT")
+	router.Handle("/api/v1/projects/{id}", routeChainAuthed.ThenFunc(DeleteProjectsHandler)).Methods("DELETE")
+	// TODO need to create a Task api as projects have tasks
 	log.Printf("Starter Server on port %s\n", app.Port[1:])
 	log.Fatal(http.ListenAndServe(app.Port, router))
 }
