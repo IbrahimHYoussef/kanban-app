@@ -1,8 +1,31 @@
 services:
-  app:
+
+  kanban-nginx:
+    image: nginx:latest
+    restart: always
+
+
+  # kanban-front:
+    
+
+
+  kanban-back:
+    restart: always
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - 4000:4000
+    depends_on:
+      - kanban-db
+  
+  kanban-db:
+    image: postgres:17
+    ports:
+      - 5432:5432
+    
+volumns:
+  kanban-db-volumn:
+
+
     
