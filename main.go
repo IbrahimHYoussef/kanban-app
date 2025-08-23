@@ -273,7 +273,7 @@ func LoadEnv(mode string) error {
 	case "test":
 		file_path = ".env.test"
 	default:
-		file_path = ".env"
+		file_path = ".env.dev"
 	}
 
 	err := godotenv.Load(file_path)
