@@ -1,14 +1,15 @@
 package main
 
 import (
+	"bytes"
+	"context"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"flag"
+	"io"
 	"log"
 	"net/http"
 	"os"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -18,6 +19,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/justinas/alice"
 	_ "github.com/lib/pq"
+	"github.com/xeipuuv/gojsonschema"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -123,15 +125,6 @@ func RespondWithError(w http.ResponseWriter, status_code int, message string) {
 	json.NewEncoder(w).Encode(&res)
 }
 
-func ValidateEmail(email string) error {
-	re := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
-	if !re.MatchString(email) {
-		return errors.New("email dose not match email fromate")
-	} else {
-		return nil
-	}
-}
-
 // register
 func (app *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json")
@@ -139,11 +132,6 @@ func (app *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&auth_req)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, "Invalid Request")
-		return
-	}
-	err = ValidateEmail(auth_req.Username)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "email not in correct formate")
 		return
 	}
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(auth_req.Password), bcrypt.DefaultCost)
@@ -212,7 +200,7 @@ func (app *App) LoginHandler(w http.ResponseWriter, r *http.Request) {
 // create project
 func CreateProjectHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json")
-
+	log.Printf("User accessing is %s", r.Context())
 }
 
 // update project
@@ -248,7 +236,7 @@ func LoggingMiddleWare(next http.Handler) http.Handler {
 	})
 }
 
-func AuthMiddleWare(next http.Handler) http.Handler {
+func (app *App) AuthMiddleWare(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		auth_header := r.Header.Get("Authorization")
@@ -256,12 +244,66 @@ func AuthMiddleWare(next http.Handler) http.Handler {
 			RespondWithError(w, http.StatusUnauthorized, "Not Allowed To Access This Endpoint")
 			return
 		}
-		token := auth_header[7:]
-		log.Print(token)
+		tokenString := auth_header[7:]
+		claims := &Claims{}
+		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+			return app.JWTKey, nil
+		})
+		if err != nil {
+			if err == jwt.ErrTokenSignatureInvalid {
+				RespondWithError(w, http.StatusUnauthorized, "Not Allowed To Access This Endpoint")
+				return
+			}
+			RespondWithError(w, http.StatusBadRequest, "Not Allowed To Access This Endpoint")
+			return
+		}
+		if !token.Valid {
+			RespondWithError(w, http.StatusUnauthorized, "Not Allowed To Access This Endpoint")
+			return
+		}
 
-		next.ServeHTTP(w, r)
+		ctx := context.WithValue(r.Context(), claims, claims)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
+
+func ValidationMiddelWare(schema string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var body map[string]interface{}
+			bodyBytes, err := io.ReadAll(r.Body)
+			if err != nil {
+				RespondWithError(w, http.StatusBadRequest, "Invalid Request Payload")
+				return
+			}
+			err = json.Unmarshal(bodyBytes, &body)
+			if err != nil {
+				RespondWithError(w, http.StatusBadRequest, "Invalid Request Payload")
+				return
+			}
+			schemaLoader := gojsonschema.NewStringLoader(schema)
+
+			documentLoader := gojsonschema.NewGoLoader(body)
+			result, err := gojsonschema.Validate(schemaLoader, documentLoader)
+			if err != nil {
+				RespondWithError(w, http.StatusInternalServerError, "Error Validating json")
+				return
+			}
+			if !result.Valid() {
+				var errs []string
+				for _, err := range result.Errors() {
+					errs = append(errs, err.String())
+				}
+				RespondWithError(w, http.StatusBadRequest, strings.Join(errs, ", "))
+				return
+			}
+			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
 func LoadEnv(mode string) error {
 	var file_path string
 
@@ -283,9 +325,9 @@ func LoadEnv(mode string) error {
 	return nil
 
 }
+
 func main() {
 
-	log.Println(len(os.Args), os.Args)
 	var ServerMode string
 	flag.StringVar(&ServerMode, "mode", "dev", "determine the server mode running")
 
@@ -304,32 +346,36 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could Not Connect to Database\n %s", err)
 	}
-	app := &App{DB: DB, Port: ":4000", JWTKey: []byte(os.Getenv("JWT_KEY"))}
+	jwt_secret := []byte(os.Getenv("JWT_KEY"))
+	if len(jwt_secret) == 0 {
+		log.Fatalf("JWT secret is not added in the enviroment varibles")
+	}
+	app := &App{DB: DB, Port: ":4000", JWTKey: jwt_secret}
 	defer DB.Close()
 
 	router := mux.NewRouter()
 
 	routeChain := alice.New(LoggingMiddleWare)
 
-	routeChainAuthed := alice.New(LoggingMiddleWare, AuthMiddleWare)
+	routeChainAuthed := alice.New(LoggingMiddleWare, app.AuthMiddleWare)
 
 	router.Handle("/", routeChain.ThenFunc(HandleHealth)).Methods("GET")
 
 	router.Handle("/tax", routeChain.ThenFunc(HandleTax)).Methods("POST")
 
-	router.Handle("/register", routeChain.ThenFunc(app.RegisterHandler)).Methods("POST")
+	router.Handle("/api/v1/auth/register", routeChain.ThenFunc(app.RegisterHandler)).Methods("POST")
 
-	router.Handle("/login", routeChain.ThenFunc(app.LoginHandler)).Methods("POST")
+	router.Handle("/api/v1/auth/login", routeChain.ThenFunc(app.LoginHandler)).Methods("POST")
 
-	router.Handle("/projects", routeChainAuthed.ThenFunc(CreateProjectHandler)).Methods("POST")
+	router.Handle("/api/v1/projects", routeChainAuthed.ThenFunc(CreateProjectHandler)).Methods("POST")
 
-	router.Handle("/projects/{id}", routeChain.ThenFunc(UpdateProjectHandler)).Methods("PUT")
+	router.Handle("/api/v1/projects/{id}", routeChain.ThenFunc(UpdateProjectHandler)).Methods("PUT")
 
-	router.Handle("/projects/{id}", routeChain.ThenFunc(GetProjectHandler)).Methods("GET")
+	router.Handle("/api/v1/projects/{id}", routeChain.ThenFunc(GetProjectHandler)).Methods("GET")
 
-	router.Handle("/projects", routeChain.ThenFunc(GetProjectsHandler)).Methods("GET")
+	router.Handle("/api/v1/projects", routeChain.ThenFunc(GetProjectsHandler)).Methods("GET")
 
-	router.Handle("/projects/{id}", routeChain.ThenFunc(DeleteProjectsHandler)).Methods("DELETE")
+	router.Handle("/api/v1/projects/{id}", routeChain.ThenFunc(DeleteProjectsHandler)).Methods("DELETE")
 
 	log.Printf("Starter Server on port %s\n", app.Port[1:])
 	log.Fatal(http.ListenAndServe(app.Port, router))
