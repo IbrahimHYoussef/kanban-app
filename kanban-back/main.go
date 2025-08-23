@@ -24,9 +24,10 @@ import (
 )
 
 type App struct {
-	Port   string
-	DB     *sql.DB
-	JWTKey []byte
+	Port       string
+	DB         *sql.DB
+	JWTKey     []byte
+	SCHEMA_DIR string
 }
 
 type RouteResponse struct {
@@ -269,6 +270,9 @@ func (app *App) AuthMiddleWare(next http.Handler) http.Handler {
 }
 
 func ValidationMiddelWare(schema string) func(http.Handler) http.Handler {
+	if len(schema) == 0 {
+		log.Fatal("No Schema String was added")
+	}
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var body map[string]interface{}
@@ -326,6 +330,39 @@ func LoadEnv(mode string) error {
 
 }
 
+// load schema to load json schema
+func LoadSchema(filePath string) (string, error) {
+	log.Printf("loading %s", filePath)
+	date, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", err
+	}
+	return string(date), nil
+}
+
+func LoadSchemas(dirPath string) (map[string]string, error) {
+	if dirPath[len(dirPath)-1] != '/' {
+		dirPath = dirPath + "/"
+	}
+	log.Printf("loading json schemas from %s", dirPath)
+	files, err := os.ReadDir(dirPath)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]string)
+	for _, file := range files {
+		sliced := strings.Split(file.Name(), ".")
+		if sliced[len(sliced)-1] == "json" {
+			fcontent, err := LoadSchema(dirPath + file.Name())
+			if err != nil {
+				return nil, err
+			}
+			result[file.Name()] = fcontent
+		}
+	}
+	return result, nil
+}
+
 func main() {
 
 	var ServerMode string
@@ -346,12 +383,23 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could Not Connect to Database\n %s", err)
 	}
+	defer DB.Close()
+
 	jwt_secret := []byte(os.Getenv("JWT_KEY"))
 	if len(jwt_secret) == 0 {
-		log.Fatalf("JWT secret is not added in the enviroment varibles")
+		log.Fatalf("JWT secret is not added in the environment varibles")
 	}
-	app := &App{DB: DB, Port: ":4000", JWTKey: jwt_secret}
-	defer DB.Close()
+	schema_dir := os.Getenv("SCHEMA_PATH")
+	if len(schema_dir) == 0 {
+		log.Fatal("Schema Path not added in the environment varibles")
+	}
+	app := &App{DB: DB, Port: ":4000", JWTKey: jwt_secret, SCHEMA_DIR: schema_dir}
+
+	schemas, err := LoadSchemas(app.SCHEMA_DIR)
+	if err != nil {
+		log.Fatalf("Could Not load schemas")
+	}
+	// log.Print(schemas["loginuser.json"])
 
 	router := mux.NewRouter()
 
@@ -359,22 +407,18 @@ func main() {
 
 	routeChainAuthed := alice.New(LoggingMiddleWare, app.AuthMiddleWare)
 
-	router.Handle("/", routeChain.ThenFunc(HandleHealth)).Methods("GET")
+	loginMiddleWare := alice.New(LoggingMiddleWare, ValidationMiddelWare(schemas["loginuser.json"]))
 
+	router.Handle("/", routeChain.ThenFunc(HandleHealth)).Methods("GET")
 	router.Handle("/tax", routeChain.ThenFunc(HandleTax)).Methods("POST")
 
-	router.Handle("/api/v1/auth/register", routeChain.ThenFunc(app.RegisterHandler)).Methods("POST")
-
-	router.Handle("/api/v1/auth/login", routeChain.ThenFunc(app.LoginHandler)).Methods("POST")
+	router.Handle("/api/v1/auth/register", loginMiddleWare.ThenFunc(app.RegisterHandler)).Methods("POST")
+	router.Handle("/api/v1/auth/login", loginMiddleWare.ThenFunc(app.LoginHandler)).Methods("POST")
 
 	router.Handle("/api/v1/projects", routeChainAuthed.ThenFunc(CreateProjectHandler)).Methods("POST")
-
 	router.Handle("/api/v1/projects/{id}", routeChain.ThenFunc(UpdateProjectHandler)).Methods("PUT")
-
 	router.Handle("/api/v1/projects/{id}", routeChain.ThenFunc(GetProjectHandler)).Methods("GET")
-
 	router.Handle("/api/v1/projects", routeChain.ThenFunc(GetProjectsHandler)).Methods("GET")
-
 	router.Handle("/api/v1/projects/{id}", routeChain.ThenFunc(DeleteProjectsHandler)).Methods("DELETE")
 
 	log.Printf("Starter Server on port %s\n", app.Port[1:])
