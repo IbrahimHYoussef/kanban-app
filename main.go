@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"flag"
 	"log"
 	"net/http"
 	"os"
@@ -261,14 +262,38 @@ func AuthMiddleWare(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+func LoadEnv(mode string) error {
+	var file_path string
 
+	switch mode {
+	case "dev":
+		file_path = ".env.dev"
+	case "prod":
+		file_path = ".env"
+	case "test":
+		file_path = ".env.test"
+	default:
+		file_path = ".env"
+	}
+
+	err := godotenv.Load(file_path)
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
 func main() {
-	err := godotenv.Load()
+
+	log.Println(len(os.Args), os.Args)
+	var ServerMode string
+	flag.StringVar(&ServerMode, "mode", "dev", "determine the server mode running")
+
+	log.Printf("Starting Server in %s mode", ServerMode)
+	err := LoadEnv(ServerMode)
 	if err != nil {
 		log.Fatal("Error Loading .env file")
 	}
-
-	log.Println("Hello server")
 
 	connString := os.Getenv("PSQL_URL")
 	if len(connString) == 0 {
