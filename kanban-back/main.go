@@ -5,7 +5,9 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -378,43 +380,56 @@ func LoadSchemas(dirPath string) (map[string]string, error) {
 	return result, nil
 }
 
+func CreateApp(server_mode string) (*App, error) {
+	err := LoadEnv(server_mode)
+	if err != nil {
+		// log.Fatal("Error Loading .env file")
+		return nil, errors.New("Error Loading .env file")
+	}
+
+	connString := os.Getenv("PSQL_URL")
+	if len(connString) == 0 {
+		// log.Fatalf("No Environment Connection String Set")
+		return nil, errors.New("No Environment Connection String Set")
+	}
+
+	DB, err := sql.Open("postgres", connString)
+	if err != nil {
+		// log.Fatalf("Could Not Connect to Database\n %s", err)
+		return nil, fmt.Errorf("Could Not Connect to Database\n %s", err)
+	}
+	defer DB.Close()
+
+	jwt_secret := []byte(os.Getenv("JWT_KEY"))
+	if len(jwt_secret) == 0 {
+		// log.Fatalf("JWT secret is not added in the environment varibles")
+		return nil, errors.New("JWT secret is not added in the environment varibles")
+	}
+	schema_dir := os.Getenv("SCHEMA_PATH")
+	if len(schema_dir) == 0 {
+		// log.Fatal("Schema Path not added in the environment varibles")
+		return nil, errors.New("Schema Path not added in the environment varibles")
+	}
+
+	return &App{DB: DB, Port: ":4000", JWTKey: jwt_secret, SCHEMA_DIR: schema_dir}, nil
+}
+
 func main() {
 
 	var ServerMode string
 	flag.StringVar(&ServerMode, "mode", "dev", "determine the server mode running")
 
 	log.Printf("Starting Server in %s mode", ServerMode)
-	err := LoadEnv(ServerMode)
+
+	app, err := CreateApp(ServerMode)
 	if err != nil {
-		log.Fatal("Error Loading .env file")
+		log.Fatal(err)
 	}
-
-	connString := os.Getenv("PSQL_URL")
-	if len(connString) == 0 {
-		log.Fatalf("No Environment Connection String Set")
-	}
-
-	DB, err := sql.Open("postgres", connString)
-	if err != nil {
-		log.Fatalf("Could Not Connect to Database\n %s", err)
-	}
-	defer DB.Close()
-
-	jwt_secret := []byte(os.Getenv("JWT_KEY"))
-	if len(jwt_secret) == 0 {
-		log.Fatalf("JWT secret is not added in the environment varibles")
-	}
-	schema_dir := os.Getenv("SCHEMA_PATH")
-	if len(schema_dir) == 0 {
-		log.Fatal("Schema Path not added in the environment varibles")
-	}
-	app := &App{DB: DB, Port: ":4000", JWTKey: jwt_secret, SCHEMA_DIR: schema_dir}
 
 	schemas, err := LoadSchemas(app.SCHEMA_DIR)
 	if err != nil {
 		log.Fatalf("Could Not load schemas")
 	}
-	// log.Print(schemas["loginuser.json"])
 
 	router := mux.NewRouter()
 
@@ -424,7 +439,6 @@ func main() {
 
 	loginMiddleWare := alice.New(LoggingMiddleWare, ValidationMiddelWare(schemas["loginuser.json"]))
 	projectMiddleWare := alice.New(LoggingMiddleWare, app.AuthMiddleWare, ValidationMiddelWare(schemas["projects.json"]))
-	// projectMiddleWare := alice.New(LoggingMiddleWare, app.AuthMiddleWare, ValidationMiddelWare(""))
 
 	router.Handle("/", routeChain.ThenFunc(HandleHealth)).Methods("GET")
 	router.Handle("/tax", routeChain.ThenFunc(HandleTax)).Methods("POST")
