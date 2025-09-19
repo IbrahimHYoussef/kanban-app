@@ -1,0 +1,421 @@
+{
+    "extension": "linecounter",
+    "version": "0.2.7",
+    "workspace": "/home/ibrahim/Work/GO",
+    "linecount": [
+        {
+            "version": "0.2.7",
+            "counttime": "2025-09-19 23:39:21",
+            "filesum": 55,
+            "codesum": 5634,
+            "commentsum": 100,
+            "blanksum": 311,
+            "statistics": {
+                ".yaml": {
+                    "code": 38,
+                    "comment": 0,
+                    "blank": 10
+                },
+                ".md": {
+                    "code": 12,
+                    "comment": 1,
+                    "blank": 7
+                },
+                ".json": {
+                    "code": 4523,
+                    "comment": 5,
+                    "blank": 100
+                },
+                ".go": {
+                    "code": 448,
+                    "comment": 18,
+                    "blank": 115
+                },
+                ".sum": {
+                    "code": 25,
+                    "comment": 0,
+                    "blank": 0
+                },
+                ".ts": {
+                    "code": 270,
+                    "comment": 64,
+                    "blank": 22
+                },
+                "": {
+                    "code": 88,
+                    "comment": 1,
+                    "blank": 15
+                },
+                ".js": {
+                    "code": 117,
+                    "comment": 7,
+                    "blank": 22
+                },
+                ".sql": {
+                    "code": 16,
+                    "comment": 0,
+                    "blank": 3
+                },
+                ".svelte": {
+                    "code": 61,
+                    "comment": 1,
+                    "blank": 12
+                },
+                ".mod": {
+                    "code": 18,
+                    "comment": 2,
+                    "blank": 5
+                },
+                ".dev": {
+                    "code": 3,
+                    "comment": 1,
+                    "blank": 0
+                },
+                ".html": {
+                    "code": 12,
+                    "comment": 0,
+                    "blank": 0
+                },
+                ".css": {
+                    "code": 3,
+                    "comment": 0,
+                    "blank": 0
+                }
+            },
+            "filelist": [
+                {
+                    "blank": 10,
+                    "code": 38,
+                    "comment": 0,
+                    "filename": "docker-compose.yaml"
+                },
+                {
+                    "blank": 0,
+                    "code": 3,
+                    "comment": 1,
+                    "filename": "kanban-back/.env"
+                },
+                {
+                    "blank": 0,
+                    "code": 3,
+                    "comment": 1,
+                    "filename": "kanban-back/.env.dev"
+                },
+                {
+                    "blank": 9,
+                    "code": 31,
+                    "comment": 0,
+                    "filename": "kanban-back/.gitignore"
+                },
+                {
+                    "blank": 15,
+                    "code": 48,
+                    "comment": 4,
+                    "filename": "kanban-back/app.go"
+                },
+                {
+                    "blank": 19,
+                    "code": 90,
+                    "comment": 3,
+                    "filename": "kanban-back/auth.go"
+                },
+                {
+                    "blank": 2,
+                    "code": 15,
+                    "comment": 0,
+                    "filename": "kanban-back/Dockerfile"
+                },
+                {
+                    "blank": 5,
+                    "code": 18,
+                    "comment": 2,
+                    "filename": "kanban-back/go.mod"
+                },
+                {
+                    "blank": 0,
+                    "code": 25,
+                    "comment": 0,
+                    "filename": "kanban-back/go.sum"
+                },
+                {
+                    "blank": 35,
+                    "code": 157,
+                    "comment": 9,
+                    "filename": "kanban-back/handles.go"
+                },
+                {
+                    "filename": "kanban-back/kanban-app",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 20,
+                    "code": 41,
+                    "comment": 2,
+                    "filename": "kanban-back/main.go"
+                },
+                {
+                    "blank": 20,
+                    "code": 79,
+                    "comment": 0,
+                    "filename": "kanban-back/middleware.go"
+                },
+                {
+                    "blank": 6,
+                    "code": 33,
+                    "comment": 0,
+                    "filename": "kanban-back/schema.go"
+                },
+                {
+                    "blank": 0,
+                    "code": 19,
+                    "comment": 0,
+                    "filename": "kanban-back/schemas/loginuser.json"
+                },
+                {
+                    "blank": 0,
+                    "code": 44,
+                    "comment": 0,
+                    "filename": "kanban-back/schemas/projects.json"
+                },
+                {
+                    "blank": 0,
+                    "code": 25,
+                    "comment": 0,
+                    "filename": "kanban-back/schemas/registeruser.json"
+                },
+                {
+                    "blank": 3,
+                    "code": 16,
+                    "comment": 0,
+                    "filename": "kanban-back/sql/1_create_first_two_tables.sql"
+                },
+                {
+                    "blank": 4,
+                    "code": 19,
+                    "comment": 0,
+                    "filename": "kanban-front/.gitignore"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "kanban-front/.npmrc"
+                },
+                {
+                    "blank": 0,
+                    "code": 4,
+                    "comment": 0,
+                    "filename": "kanban-front/.prettierignore"
+                },
+                {
+                    "blank": 0,
+                    "code": 15,
+                    "comment": 0,
+                    "filename": "kanban-front/.prettierrc"
+                },
+                {
+                    "blank": 8,
+                    "code": 195,
+                    "comment": 54,
+                    "filename": "kanban-front/.svelte-kit/ambient.d.ts"
+                },
+                {
+                    "blank": 9,
+                    "code": 19,
+                    "comment": 0,
+                    "filename": "kanban-front/.svelte-kit/generated/client/app.js"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "kanban-front/.svelte-kit/generated/client/matchers.js"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "kanban-front/.svelte-kit/generated/client/nodes/0.js"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "kanban-front/.svelte-kit/generated/client/nodes/1.js"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "kanban-front/.svelte-kit/generated/client/nodes/2.js"
+                },
+                {
+                    "blank": 0,
+                    "code": 3,
+                    "comment": 0,
+                    "filename": "kanban-front/.svelte-kit/generated/root.js"
+                },
+                {
+                    "blank": 11,
+                    "code": 54,
+                    "comment": 1,
+                    "filename": "kanban-front/.svelte-kit/generated/root.svelte"
+                },
+                {
+                    "blank": 8,
+                    "code": 44,
+                    "comment": 1,
+                    "filename": "kanban-front/.svelte-kit/generated/server/internal.js"
+                },
+                {
+                    "blank": 7,
+                    "code": 33,
+                    "comment": 1,
+                    "filename": "kanban-front/.svelte-kit/non-ambient.d.ts"
+                },
+                {
+                    "blank": 7,
+                    "code": 45,
+                    "comment": 0,
+                    "filename": "kanban-front/.svelte-kit/tsconfig.json"
+                },
+                {
+                    "blank": 0,
+                    "code": 3,
+                    "comment": 0,
+                    "filename": "kanban-front/.svelte-kit/types/route_meta_data.json"
+                },
+                {
+                    "blank": 2,
+                    "code": 21,
+                    "comment": 1,
+                    "filename": "kanban-front/.svelte-kit/types/src/routes/$types.d.ts"
+                },
+                {
+                    "blank": 2,
+                    "code": 32,
+                    "comment": 0,
+                    "filename": "kanban-front/eslint.config.js"
+                },
+                {
+                    "blank": 93,
+                    "code": 4249,
+                    "comment": 0,
+                    "filename": "kanban-front/package-lock.json"
+                },
+                {
+                    "blank": 0,
+                    "code": 39,
+                    "comment": 0,
+                    "filename": "kanban-front/package.json"
+                },
+                {
+                    "blank": 0,
+                    "code": 6,
+                    "comment": 0,
+                    "filename": "kanban-front/postcss.config.js"
+                },
+                {
+                    "blank": 7,
+                    "code": 12,
+                    "comment": 1,
+                    "filename": "kanban-front/README.md"
+                },
+                {
+                    "blank": 0,
+                    "code": 3,
+                    "comment": 0,
+                    "filename": "kanban-front/src/app.css"
+                },
+                {
+                    "blank": 1,
+                    "code": 5,
+                    "comment": 7,
+                    "filename": "kanban-front/src/app.d.ts"
+                },
+                {
+                    "blank": 0,
+                    "code": 12,
+                    "comment": 0,
+                    "filename": "kanban-front/src/app.html"
+                },
+                {
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 1,
+                    "filename": "kanban-front/src/lib/index.ts"
+                },
+                {
+                    "blank": 1,
+                    "code": 5,
+                    "comment": 0,
+                    "filename": "kanban-front/src/routes/+layout.svelte"
+                },
+                {
+                    "blank": 0,
+                    "code": 2,
+                    "comment": 0,
+                    "filename": "kanban-front/src/routes/+page.svelte"
+                },
+                {
+                    "filename": "kanban-front/static/favicon.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 3,
+                    "code": 9,
+                    "comment": 6,
+                    "filename": "kanban-front/svelte.config.js"
+                },
+                {
+                    "blank": 3,
+                    "code": 11,
+                    "comment": 0,
+                    "filename": "kanban-front/tailwind.config.ts"
+                },
+                {
+                    "blank": 0,
+                    "code": 14,
+                    "comment": 5,
+                    "filename": "kanban-front/tsconfig.json"
+                },
+                {
+                    "blank": 1,
+                    "code": 5,
+                    "comment": 0,
+                    "filename": "kanban-front/vite.config.ts"
+                },
+                {
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0,
+                    "filename": "README.md"
+                },
+                {
+                    "blank": 0,
+                    "code": 19,
+                    "comment": 0,
+                    "filename": "schemas/loginuser.json"
+                },
+                {
+                    "blank": 0,
+                    "code": 41,
+                    "comment": 0,
+                    "filename": "schemas/projects.json"
+                },
+                {
+                    "blank": 0,
+                    "code": 25,
+                    "comment": 0,
+                    "filename": "schemas/registeruser.json"
+                }
+            ]
+        }
+    ]
+}

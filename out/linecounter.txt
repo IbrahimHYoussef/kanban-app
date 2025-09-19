@@ -1,0 +1,85 @@
+===============================================================================
+EXTENSION NAME : linecounter
+EXTENSION VERSION : 0.2.7
+-------------------------------------------------------------------------------
+count time : 2025-09-19 23:39:21
+count workspace : /home/ibrahim/Work/GO
+total files : 55
+total code lines : 5634
+total comment lines : 100
+total blank lines : 311
+
+    statistics
+   |      extension|     total code|  total comment|    total blank|percent|
+   -------------------------------------------------------------------------
+   |          .yaml|             38|              0|             10|   0.67|
+   |            .md|             12|              1|              7|   0.21|
+   |          .json|           4523|              5|            100|     80|
+   |            .go|            448|             18|            115|    8.0|
+   |           .sum|             25|              0|              0|   0.44|
+   |            .ts|            270|             64|             22|    4.8|
+   |               |             88|              1|             15|    1.6|
+   |            .js|            117|              7|             22|    2.1|
+   |           .sql|             16|              0|              3|   0.28|
+   |        .svelte|             61|              1|             12|    1.1|
+   |           .mod|             18|              2|              5|   0.32|
+   |           .dev|              3|              1|              0|  0.053|
+   |          .html|             12|              0|              0|   0.21|
+   |           .css|              3|              0|              0|  0.053|
+   -------------------------------------------------------------------------
+docker-compose.yaml, code is 38, comment is 0, blank is 10.
+kanban-back/.env, code is 3, comment is 1, blank is 0.
+kanban-back/.env.dev, code is 3, comment is 1, blank is 0.
+kanban-back/.gitignore, code is 31, comment is 0, blank is 9.
+kanban-back/app.go, code is 48, comment is 4, blank is 15.
+kanban-back/auth.go, code is 90, comment is 3, blank is 19.
+kanban-back/Dockerfile, code is 15, comment is 0, blank is 2.
+kanban-back/go.mod, code is 18, comment is 2, blank is 5.
+kanban-back/go.sum, code is 25, comment is 0, blank is 0.
+kanban-back/handles.go, code is 157, comment is 9, blank is 35.
+kanban-back/kanban-app, it is a binary file.
+kanban-back/main.go, code is 41, comment is 2, blank is 20.
+kanban-back/middleware.go, code is 79, comment is 0, blank is 20.
+kanban-back/schema.go, code is 33, comment is 0, blank is 6.
+kanban-back/schemas/loginuser.json, code is 19, comment is 0, blank is 0.
+kanban-back/schemas/projects.json, code is 44, comment is 0, blank is 0.
+kanban-back/schemas/registeruser.json, code is 25, comment is 0, blank is 0.
+kanban-back/sql/1_create_first_two_tables.sql, code is 16, comment is 0, blank is 3.
+kanban-front/.gitignore, code is 19, comment is 0, blank is 4.
+kanban-front/.npmrc, code is 1, comment is 0, blank is 0.
+kanban-front/.prettierignore, code is 4, comment is 0, blank is 0.
+kanban-front/.prettierrc, code is 15, comment is 0, blank is 0.
+kanban-front/.svelte-kit/ambient.d.ts, code is 195, comment is 54, blank is 8.
+kanban-front/.svelte-kit/generated/client/app.js, code is 19, comment is 0, blank is 9.
+kanban-front/.svelte-kit/generated/client/matchers.js, code is 1, comment is 0, blank is 0.
+kanban-front/.svelte-kit/generated/client/nodes/0.js, code is 1, comment is 0, blank is 0.
+kanban-front/.svelte-kit/generated/client/nodes/1.js, code is 1, comment is 0, blank is 0.
+kanban-front/.svelte-kit/generated/client/nodes/2.js, code is 1, comment is 0, blank is 0.
+kanban-front/.svelte-kit/generated/root.js, code is 3, comment is 0, blank is 0.
+kanban-front/.svelte-kit/generated/root.svelte, code is 54, comment is 1, blank is 11.
+kanban-front/.svelte-kit/generated/server/internal.js, code is 44, comment is 1, blank is 8.
+kanban-front/.svelte-kit/non-ambient.d.ts, code is 33, comment is 1, blank is 7.
+kanban-front/.svelte-kit/tsconfig.json, code is 45, comment is 0, blank is 7.
+kanban-front/.svelte-kit/types/route_meta_data.json, code is 3, comment is 0, blank is 0.
+kanban-front/.svelte-kit/types/src/routes/$types.d.ts, code is 21, comment is 1, blank is 2.
+kanban-front/eslint.config.js, code is 32, comment is 0, blank is 2.
+kanban-front/package-lock.json, code is 4249, comment is 0, blank is 93.
+kanban-front/package.json, code is 39, comment is 0, blank is 0.
+kanban-front/postcss.config.js, code is 6, comment is 0, blank is 0.
+kanban-front/README.md, code is 12, comment is 1, blank is 7.
+kanban-front/src/app.css, code is 3, comment is 0, blank is 0.
+kanban-front/src/app.d.ts, code is 5, comment is 7, blank is 1.
+kanban-front/src/app.html, code is 12, comment is 0, blank is 0.
+kanban-front/src/lib/index.ts, code is 0, comment is 1, blank is 0.
+kanban-front/src/routes/+layout.svelte, code is 5, comment is 0, blank is 1.
+kanban-front/src/routes/+page.svelte, code is 2, comment is 0, blank is 0.
+kanban-front/static/favicon.png, it is a binary file.
+kanban-front/svelte.config.js, code is 9, comment is 6, blank is 3.
+kanban-front/tailwind.config.ts, code is 11, comment is 0, blank is 3.
+kanban-front/tsconfig.json, code is 14, comment is 5, blank is 0.
+kanban-front/vite.config.ts, code is 5, comment is 0, blank is 1.
+README.md, code is 0, comment is 0, blank is 0.
+schemas/loginuser.json, code is 19, comment is 0, blank is 0.
+schemas/projects.json, code is 41, comment is 0, blank is 0.
+schemas/registeruser.json, code is 25, comment is 0, blank is 0.
+===============================================================================
