@@ -9,16 +9,22 @@ services:
           cpus: "1.0"
           memory: 100M
 
-  # kanban-front:
-  #   restart: always
-  #   build:
-  #     context: ./kanban-front
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - 3000:3000
-  #   depends_on:
-  #     - kanban-back
-    
+
+  
+  kanban-front:
+    restart: always
+    build:
+      context: ./kanban-front
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - kanban-back
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 100M
 
 
   kanban-back:
