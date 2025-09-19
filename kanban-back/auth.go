@@ -30,6 +30,10 @@ type AuthResponse struct {
 	Token    string `json:"token,omitempty"`
 }
 
+type contextKey string
+
+const UserClaimsKey contextKey = "claims"
+
 func ExtractClaims(r *http.Request) (*Claims, error) {
 	claims, ok := r.Context().Value(UserClaimsKey).(*Claims)
 	if !ok {

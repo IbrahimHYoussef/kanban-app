@@ -13,10 +13,6 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
-type contextKey string
-
-const UserClaimsKey contextKey = "userClaims"
-
 func LoggingMiddleWare(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)

@@ -163,6 +163,9 @@ func (app *App) CreateProjectHandler(w http.ResponseWriter, r *http.Request) {
 		log.Print(err)
 		return
 	}
+	req.ProjectID = project_id
+
+	json.NewEncoder(w).Encode(&req)
 
 }
 
