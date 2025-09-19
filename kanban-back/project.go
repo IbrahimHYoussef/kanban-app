@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"strings"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/lib/pq"
@@ -31,67 +29,6 @@ type Project struct {
 	Dependencies    []string `json:"dependencies,omitempty"`
 	DevDependencies []string `json:"dev_dependencies,omitempty"`
 	State           string   `json:"status,omitempty"`
-}
-type HealthCheck struct {
-	IsHealthy bool   `json:"is_healthy"`
-	Time      string `json:"time"`
-}
-
-type TaxCalculaterRequest struct {
-	Type   string  `json:"type"`
-	Amount float64 `json:"amount"`
-}
-
-type TaxCalculaterResponse struct {
-	Type        string  `json:"type"`
-	TaxAmount   float64 `json:"tax_amount"`
-	TotalAmount float64 `json:"total_amount"`
-}
-
-func HandleHealth(w http.ResponseWriter, r *http.Request) {
-	start := time.Now()
-	w.Header().Set("Content-type", "application/json")
-	now := time.Now().String()
-	json.NewEncoder(w).Encode(HealthCheck{IsHealthy: true, Time: now})
-	end := time.Now()
-	total := end.Sub(start).String()
-	log.Printf("request took : %s", total)
-}
-
-func HandleTax(w http.ResponseWriter, r *http.Request) {
-	// decoder := json.NewDecoder(w)
-	// encoder := json.Encoder(w)
-
-	var body TaxCalculaterRequest
-
-	err := json.NewDecoder(r.Body).Decode(&body)
-	if err != nil {
-		http.Error(w, "Invalid Request Body", http.StatusUnprocessableEntity)
-		log.Println("Invalid Request Body")
-		return
-	}
-
-	var response TaxCalculaterResponse
-
-	tax_type := strings.ToLower(body.Type)
-	var tax_mult float64
-	switch tax_type {
-	case "vat":
-		tax_mult = 0.14
-	case "cgt":
-		tax_mult = 0.20
-	default:
-		http.Error(w, "Not Supported Tax Type", http.StatusBadRequest)
-		log.Printf("Invalid Tax Type %s\n", body.Type)
-		return
-	}
-	response.TaxAmount = body.Amount * tax_mult
-	response.TotalAmount = body.Amount + response.TaxAmount
-	response.Type = body.Type
-
-	json.NewEncoder(w).Encode(response)
-	log.Printf("Calculated Tax with Type %s and Amount %f Total Amount %f\n", tax_type, response.TaxAmount, response.TotalAmount)
-
 }
 
 func RespondWithError(w http.ResponseWriter, status_code int, message string) {
