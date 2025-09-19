@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/lib/pq"
 )
 
 type RouteResponse struct {
@@ -119,20 +120,6 @@ func (app *App) CreateProjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var dependenciesJSON, devDependenciesJSON []byte
-
-	if req.Dependencies == nil {
-		dependenciesJSON = []byte("[]") // Empty JSON array
-	} else {
-		dependenciesJSON, _ = json.Marshal(req.Dependencies)
-	}
-
-	if req.DevDependencies == nil {
-		devDependenciesJSON = []byte("[]") // Empty JSON array
-	} else {
-		devDependenciesJSON, _ = json.Marshal(req.DevDependencies)
-	}
-
 	query := `INSERT INTO projects
         (
         name,
@@ -154,8 +141,8 @@ func (app *App) CreateProjectHandler(w http.ResponseWriter, r *http.Request) {
 		req.ReboUrl,
 		req.SiteUrl,
 		req.Description,
-		string(dependenciesJSON),
-		string(devDependenciesJSON),
+		pq.Array(req.Dependencies),
+		pq.Array(req.DevDependencies),
 		req.State,
 		user_id).Scan(&project_id)
 	if err != nil {
