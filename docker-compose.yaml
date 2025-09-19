@@ -1,0 +1,49 @@
+services:
+
+  kanban-nginx:
+    image: nginx:latest
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 100M
+
+  # kanban-front:
+  #   restart: always
+  #   build:
+  #     context: ./kanban-front
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - 3000:3000
+  #   depends_on:
+  #     - kanban-back
+    
+
+
+  kanban-back:
+    restart: always
+    build:
+      context: ./kanban-back
+      dockerfile: Dockerfile
+    ports:
+      - 4000:4000
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 100M
+
+    # depends_on:
+    #   - kanban-db
+  
+  # kanban-db:
+  #   image: postgres:17
+  #   ports:
+  #     - 5432:5432
+    
+volumes:
+  kanban-db-volumn:
+
+
+    
