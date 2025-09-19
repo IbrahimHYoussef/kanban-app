@@ -1,2 +1,12 @@
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
+
+
+
+
+<img src="" alt="">
+<h1 class="">Kanban</h1>
+<h3>the leading project management tool</h3>
+
+
+
+
+
